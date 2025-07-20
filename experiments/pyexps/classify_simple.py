@@ -1,4 +1,5 @@
 import math
+import os
 
 import simbricks.orchestration.experiments as exp
 import simbricks.orchestration.simulators as sim
@@ -41,24 +42,26 @@ class TvmClassifyLocal(node.AppConfig):
 
     def config_files(self):
         # mount TVM inference script in simulated server under /tmp/guest
+        import os  
+        home = os.environ.get("HOME")
         return {
             "pci_driver.cc":
                 open(
-                    "/home/jiacma/simbricks-lpn/pci_driver.cc",
+                    f"{home}/SimBricks-LPN/local/pci_driver.cc",
                     "rb",
                 ),
             "test.c":
                 open(
-                    "/home/jiacma/simbricks-lpn/test.c",
+                    f"{home}/SimBricks-LPN/local/test.c",
                     "rb",
                 ),
             "deploy_classification-infer.py":
                 open(
-                    "/home/jiacma/simbricks-lpn/tvm/vta/tutorials/frontend/deploy_classification-infer.py",
+                    f"{home}/SimBricks-LPN/local/tvm/vta/tutorials/frontend/deploy_classification-infer.py",
                     "rb",
                 ),
             "cat.png":
-                open("/home/jiacma/simbricks-lpn/data/cat.png", "rb"),
+                open(f"{home}/SimBricks-LPN/local/data/cat.png", "rb"),
         }
 
     def prepare_pre_cp(self):

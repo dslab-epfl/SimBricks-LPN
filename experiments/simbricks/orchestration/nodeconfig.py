@@ -965,10 +965,11 @@ class VTAMatMul(AppConfig):
         """Whether to use fine-grained gem5 checkpointing."""
 
     def config_files(self) -> tp.Dict[str, tp.IO]:
+        home = os.environ.get("HOME")
         return {
             'matrix_multiply_opt.py':
                 open(
-                    '/home/jiacma/npc/simbricks-lpn/tvm/vta/tutorials/optimize/matrix_multiply_opt.py',
+                    f'{home}/SimBricks-LPN/local/tvm/vta/tutorials/optimize/matrix_multiply_opt.py',
                     'rb'
                 ),
         }
@@ -1001,15 +1002,16 @@ class VtaAutoTune(AppConfig):
         self.pci_device = pci_device
 
     def config_files(self) -> tp.Dict[str, tp.IO]:
+        home = os.environ.get("HOME")
         return {
             'tune_relay_vta.py':
                 open(
-                    '/home/jiacma/npc/simbricks-lpn/tvm/vta/tutorials/autotvm/tune_relay_vta.py',
+                    f'{home}/SimBricks-LPN/local/tvm/vta/tutorials/autotvm/tune_relay_vta.py',
                     'rb'
                 ),
             'measure_methods.py':
                 open(
-                    '/home/jiacma/npc/simbricks-lpn/tvm/python/tvm/autotvm/measure/measure_methods.py',
+                    f'{home}/SimBricks-LPN/local/tvm/python/tvm/autotvm/measure/measure_methods.py',
                     'rb'
                 )
         }
@@ -1123,132 +1125,8 @@ class VtaRpcServerWTracker(AppConfig):
         ]
         return cmds
 
-
-class VtaMatMulWTracker(AppConfig):
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.tracker_host = '10.0.0.1'
-        self.tracker_port = 9190
-
-    def config_files(self) -> tp.Dict[str, tp.IO]:
-        return {
-            'matrix_multiply_opt.py':
-                open(
-                    '/local/jkaufman/tvm-simbricks/vta/tutorials/optimize/matrix_multiply_opt.py',
-                    'rb'
-                ),
-        }
-
-    def run_cmds(self, node):
-        return [
-            # wait for tracker and RPC servers to start
-            'sleep 6',
-            'echo Tracker and RPC server should be up now.',
-            f'export TVM_TRACKER_HOST={self.tracker_host}',
-            f'export TVM_TRACKER_PORT={self.tracker_port}',
-            'time -p python3 /tmp/guest/matrix_multiply_opt.py',
-        ]
-
-
 class TvmDeviceType(enum.Enum):
     VTA = 'vta'
     CPU = 'cpu'
     CPU_AVX512 = 'cpu_avx512'
 
-
-class TvmDetectWTracker(AppConfig):
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.tracker_host = '10.0.0.1'
-        self.tracker_port = 9190
-        self.device = TvmDeviceType.CPU
-        self.test_img = 'dog.jpg'
-        self.batch_size = 8
-        self.repetitions = 5
-        self.debug = False
-        """Whether to dump inference result."""
-
-    def config_files(self) -> tp.Dict[str, tp.IO]:
-        return {
-            'deploy_detection-infer.py':
-                open(
-                    '/local/jkaufman/tvm-simbricks/vta/tutorials/frontend/deploy_detection-infer.py',
-                    'rb'
-                ),
-        }
-
-    def run_cmds(self, node):
-        cmds = [
-            # wait for tracker and RPC servers to start
-            'sleep 6',
-            'echo Tracker and RPC server should be up now.',
-            f'export TVM_TRACKER_HOST={self.tracker_host}',
-            f'export TVM_TRACKER_PORT={self.tracker_port}',
-            'time -p python3 /tmp/guest/deploy_detection-infer.py '
-            f'/root/darknet {self.device.value} {self.test_img} {self.batch_size}'
-            f'{self.repetitions} {int(self.debug)}'
-        ]
-        if self.debug:
-            cmds.extend([
-                'echo dump deploy_detection-infer-result.png START',
-                'base64 deploy_detection-infer-result.png',
-                'echo dump deploy_detection-infer-result.png END',
-            ])
-        return cmds
-
-
-class TvmDetectWTracker(AppConfig):
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.pci_vta_id = 0
-        self.device = TvmDeviceType.VTA
-        self.repetitions = 1
-        self.batch_size = 1
-        self.vta_batch = 1
-        self.vta_block = 16
-        self.model_name = "resnet18_v1"
-        self.debug = True
-
-    def config_files(self) -> tp.Dict[str, tp.IO]:
-        return {
-            'deploy_classification-infer.py':
-                open(
-                    '/local/jkaufman/tvm-simbricks/vta/tutorials/frontend/deploy_classification-infer.py',
-                    'rb'
-                ),
-            "cat.jpg":
-                open("/local/jkaufman/cat.jpg", "rb"),
-        }
-
-    def prepare_pre_cp(self) -> list[str]:
-        cmds = super().prepare_pre_cp()
-        cmds.extend([
-            'echo \'{"TARGET" : "simbricks-pci", "HW_VER" : "0.0.2",'
-            ' "LOG_INP_WIDTH" : 3, "LOG_WGT_WIDTH" : 3,'
-            ' "LOG_ACC_WIDTH" : 5, "LOG_BATCH" :'
-            f' {int(math.log2(self.vta_batch))}, "LOG_BLOCK" :'
-            f' {int(math.log2(self.vta_block))}, "LOG_UOP_BUFF_SIZE" :'
-            ' 15, "LOG_INP_BUFF_SIZE" : 15, "LOG_WGT_BUFF_SIZE" : 18,'
-            ' "LOG_ACC_BUFF_SIZE" : 17 }\' >'
-            " /root/tvm/3rdparty/vta-hw/config/vta_config.json"
-        ])
-        return cmds
-
-    def run_cmds(self, node):
-        cmds = [
-            # wait for tracker and RPC servers to start
-            "sleep 6",
-            "echo Tracker and RPC server should be up now.",
-            f"export TVM_TRACKER_HOST={self.tracker_host}",
-            f"export TVM_TRACKER_PORT={self.tracker_port}",
-            (
-                "time -p python3 /tmp/guest/deploy_classification-infer.py"
-                " /root/mxnet"
-                f" {self.device.value} {self.model_name} /tmp/guest/cat.jpg"
-                f" {self.batch_size} {self.repetitions} {int(self.debug)}"
-            ),
-        ]
-        return cmds

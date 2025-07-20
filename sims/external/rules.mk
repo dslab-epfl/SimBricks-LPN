@@ -34,7 +34,7 @@ external: $(d)gem5/ready $(d)qemu/ready $(d)ns-3/ready $(d)femu/ready
 .PHONY: external gem5-clean qemu-clean ns-3-clean femu-clean
 
 $(d)gem5:
-	git clone https://github.com/simbricks/gem5.git $@
+	git clone https://github.com/MJChku/gem5.git $@
 
 $(d)gem5/ready: $(d)gem5
 	cd $< && \

@@ -1,7 +1,8 @@
 #make -C .. clean
 #make -C .. -j
+user_home="$HOME"
 
-#make -C /home/jiacma/npc/simbricks-lpn/sims/external/vta/simbricks 
+make -C /home/jiacma/npc/simbricks-lpn/sims/external/vta/simbricks 
 
 # make -C .. sims/misc/jpeg_decoder/jpeg_decoder_verilator
 # sudo -E python3 run.py --verbose --filter="*-rtl" --force pyexps/jpeg_decoder_lpn.py --repo /home/jiacma/npc/simbricks-lpn/
@@ -10,8 +11,8 @@
 # make -C ../sims/external/vta/simbricks/ clean
 # make -C ../sims/external/vta/simbricks/
 
-python3 run.py --verbose --force --filter="vtatest_200-gt-rtl" --force pyexps/vtatest.py --repo /home/jiacma/simbricks-lpn/
-#python3 run.py --verbose --force --filter="vtatest-gt-lpn" --force pyexps/vtatest.py --repo /home/jiacma/simbricks-lpn/
+python3 run.py --verbose --force --filter="vtatest_200-gt-rtl" --force pyexps/vtatest.py --repo $(user_home)/SimBricks-LPN/
+#python3 run.py --verbose --force --filter="vtatest-gt-lpn" --force pyexps/vtatest.py --repo $(user_home)/SimBricks-LPN/
 
 
 #python3 run.py --verbose --force --filter="vtatest-qk-lpn" --force pyexps/vtatest.py --repo /home/jiacma/npc/simbricks-lpn/

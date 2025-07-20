@@ -54,13 +54,13 @@ build {
 
   provisioner "file" {
     direction = "upload"
-    source = "/home/jiacma/simbricks-lpn/local/tvm"
+    source = "${env("HOME")}/SimBricks-LPN/local/tvm"
     destination = "/tmp/tvm-my-copy"
   }
 
   provisioner "file" {
     direction = "upload"
-    source = "/home/jiacma/npb"
+    source =  "${env("HOME")}/SimBricks-LPN/local/npb"
     destination = "/tmp/npb"
   }
 

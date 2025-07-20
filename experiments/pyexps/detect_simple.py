@@ -76,10 +76,11 @@ for host_var, inference_device, vta_clk_freq, vta_op in itertools.product(
 
         def config_files(self):
             # mount TVM inference script in simulated server under /tmp/guest
+            home = os.environ.get("HOME")
             return {
                 "deploy_detection-infer.py":
                     open(
-                        "/home/jiacma/simbricks-lpn/tvm/vta/tutorials/frontend/deploy_detection-infer.py",
+                        f"{home}/SimBricks-LPN/local/tvm/vta/tutorials/frontend/deploy_detection-infer.py",
                         "rb",
                     )
             }

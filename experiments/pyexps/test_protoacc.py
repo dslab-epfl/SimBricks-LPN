@@ -95,16 +95,12 @@ class ProtoaccBenchmark(node.AppConfig):
         self.which_bench = which_bench
 
     def config_files(self):
-        # mount TVM inference script in simulated server under /tmp/guest
+        import os
+        home = os.environ.get("HOME")
         return {
-            
             "benchmark.x86":
                 open(
-                    f"/home/jiacma/chipyard-protoacc-ae/generators/protoacc/firesim-workloads/hyperproto/HyperZurvanGem5/{self.which_bench}-ser/benchmark.x86",
-                    # f"/home/jiacma/chipyard-protoacc-ae/generators/protoacc/firesim-workloads/hyperproto/HyperZurvanNoAccel/{self.which_bench}-ser/benchmark.x86",
-                    # f"/home/jiacma/chipyard-protoacc-ae/generators/protoacc/firesim-workloads/hyperproto/HyperZurvan/{self.which_bench}-ser/b_pure_cpu_gem5.x86",
-                    # f"/home/jiacma/chipyard-protoacc-ae/generators/protoacc/firesim-workloads/hyperproto/HyperZurvan/{self.which_bench}-ser/vfio_with_pac.x86",
-                    # f"/home/jiacma/chipyard-protoacc-ae/generators/protoacc/firesim-workloads/hyperproto/HyperZurvan/bench1-ser/benchmark.x86",
+                    f"${home}/local/hyperproto/gem5/{self.which_bench}-ser/benchmark.x86",
                     "rb",
                 )
         }
