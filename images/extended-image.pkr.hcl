@@ -52,6 +52,19 @@ build {
     destination = "/tmp/input"
   }
 
+  provisioner "file" {
+    direction = "upload"
+    source = "/home/jiacma/simbricks-lpn/local/tvm"
+    destination = "/tmp/tvm-my-copy"
+  }
+
+  provisioner "file" {
+    direction = "upload"
+    source = "/home/jiacma/npb"
+    destination = "/tmp/npb"
+  }
+
+
   provisioner "shell" {
     execute_command = "{{ .Vars }} sudo -S -E bash '{{ .Path }}'"
     scripts         = ["scripts/install-${var.outname}.sh", "scripts/cleanup.sh"]

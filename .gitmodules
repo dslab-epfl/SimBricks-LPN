@@ -1,0 +1,4 @@
+[submodule "local/tvm"]
+	path = local/tvm
+	url = https://github.com/jonas-kaufmann/tvm-simbricks.git
+	branch = lpn
