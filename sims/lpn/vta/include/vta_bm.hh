@@ -4,7 +4,8 @@
 
 #include "vta_regs.hh"
 
-#define DMA_BLOCK_SIZE 2048
+#define DMA_BLOCK_SIZE 4096
+#define ZC_DMA_BLOCK_SIZE 4096
 
 class VTABm : public pciebm::PcieBM {
   void SetupIntro(struct SimbricksProtoPcieDevIntro &dev_intro) override;
@@ -19,6 +20,8 @@ class VTABm : public pciebm::PcieBM {
   void ExecuteEvent(std::unique_ptr<pciebm::TimedEvent> evt) override;
 
   void DevctrlUpdate(struct SimbricksProtoPcieH2DDevctrl &devctrl) override;
+
+  void FastForward() override;
 
  private:
   VTARegs Registers_;

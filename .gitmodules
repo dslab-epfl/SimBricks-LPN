@@ -1,6 +1,16 @@
+[submodule "local/tvm"]
+	path = local/tvm
+	url = https://github.com/jonas-kaufmann/tvm-simbricks.git
+	branch = lpn
+[submodule "local/npb"]
+	path = local/npb
+	url = https://github.com/MJChku/NPB3.0-omp-C
+[submodule "local/hyperprotobench"]
+	path = local/hyperprotobench
+	url = https://github.com/MJChku/hyperprotobench
 [submodule "sims/external/gem5"]
 	path = sims/external/gem5
-	url = https://github.com/simbricks/gem5.git
+	url = https://github.com/MJChku/gem5.git
 [submodule "sims/external/qemu"]
 	path = sims/external/qemu
 	url = https://github.com/simbricks/qemu.git

@@ -26,8 +26,8 @@ import io
 import os
 import tarfile
 import typing as tp
-
-import requests
+import enum
+import math
 
 
 class AppConfig():
@@ -901,7 +901,7 @@ class LinuxVTANode(NodeConfig):
 
     def __init__(self):
         super().__init__()
-        self.disk_image = 'vta'
+        self.disk_image = 'vta_classification'
         self.memory = 3 * 1024
         self.kcmd_append = ' memmap=512M!1G'
 
@@ -965,16 +965,19 @@ class VTAMatMul(AppConfig):
         """Whether to use fine-grained gem5 checkpointing."""
 
     def config_files(self) -> tp.Dict[str, tp.IO]:
+        home = os.environ.get("HOME")
         return {
             'matrix_multiply_opt.py':
                 open(
-                    '/home/jiacma/npc/simbricks-lpn/tvm/vta/tutorials/optimize/matrix_multiply_opt.py',
+                    f'{home}/SimBricks-LPN/local/tvm/vta/tutorials/optimize/matrix_multiply_opt.py',
                     'rb'
                 ),
         }
 
     def prepare_pre_cp(self) -> tp.List[str]:
         return [
+            f"llvm-config --version ",
+            f"export TVM_NUM_THREADS=1 ",
             f'export GEM5_CP={int(self.gem5_cp)}',
             f'export VTA_DEVICE={self.pci_device}',
             'export VTA_RPC_HOST=127.0.0.1',
@@ -999,15 +1002,16 @@ class VtaAutoTune(AppConfig):
         self.pci_device = pci_device
 
     def config_files(self) -> tp.Dict[str, tp.IO]:
+        home = os.environ.get("HOME")
         return {
             'tune_relay_vta.py':
                 open(
-                    '/home/jiacma/npc/simbricks-lpn/tvm/vta/tutorials/autotvm/tune_relay_vta.py',
+                    f'{home}/SimBricks-LPN/local/tvm/vta/tutorials/autotvm/tune_relay_vta.py',
                     'rb'
                 ),
             'measure_methods.py':
                 open(
-                    '/home/jiacma/npc/simbricks-lpn/tvm/python/tvm/autotvm/measure/measure_methods.py',
+                    f'{home}/SimBricks-LPN/local/tvm/python/tvm/autotvm/measure/measure_methods.py',
                     'rb'
                 )
         }
@@ -1031,52 +1035,98 @@ class VtaAutoTune(AppConfig):
         ]
 
 
-class VtaDeployClassification(AppConfig):
+class i40eLinuxTvmNode(I40eLinuxNode):
 
-    def __init__(self, pci_device: str) -> None:
+    def __init__(self):
         super().__init__()
-        self.pci_device = pci_device
+        self.disk_image = 'vta'
+        self.memory = 1024
 
-    def config_files(self) -> tp.Dict[str, tp.IO]:
-        synset_path = '/tmp/synset.txt'
-        if not os.path.isfile(synset_path):
-            req = requests.get(
-                'https://github.com/uwsampl/web-data/raw/main/vta/models/synset.txt'
-            )
-            with open(synset_path, 'wb') as file:
-                file.write(req.content)
+    def prepare_pre_cp(self):
+        cmds = super().prepare_pre_cp()
+        cmds.extend([
+            'mount -t proc proc /proc',
+            'mount -t sysfs sysfs /sys',
+            'cd /root/tvm/',
+            'export PYTHONPATH=/root/tvm/python:${PYTHONPATH}',
+            'export PYTHONPATH=/root/tvm/vta/python:${PYTHONPATH}',
+            # Otherwise, might get warnings of SYN flood, which drops requests
+            'sysctl -w net.ipv4.tcp_max_syn_backlog=4096'
+        ])
+        return cmds
 
-        cat_path = '/tmp/cat.jpg'
-        if not os.path.isfile(cat_path):
-            req = requests.get(
-                'https://homes.cs.washington.edu/~moreau/media/vta/cat.jpg'
-            )
-            with open(cat_path, 'wb') as file:
-                file.write(req.content)
 
-        return {
-            'deploy_classification.py':
-                open(
-                    '/home/jonask/Repos/tvm-simbricks/vta/tutorials/frontend/deploy_classification.py',
-                    'rb'
-                ),
-            'synset.txt':
-                open(synset_path, 'rb'),
-            'cat.jpg':
-                open(cat_path, 'rb')
-        }
+class i40eLinuxTvmDetectNode(i40eLinuxTvmNode):
 
-    def prepare_pre_cp(self) -> tp.List[str]:
-        return [
-            f'export VTA_DEVICE={self.pci_device}',
-            'export VTA_RPC_HOST=127.0.0.1',
-            'export VTA_RPC_PORT=9091',
-            # this only starts the RPC server, the driver for VTA is only loaded
-            # once VTA is actually invoked
-            '/usr/bin/python3 -m vta.exec.rpc_server --host=${VTA_RPC_HOST} --port=${VTA_RPC_PORT} &',
-            # the RPC server takes quite long to start, ofte more than 5 s
-            'sleep 10',
-        ]
+    def __init__(self):
+        super().__init__()
+        self.disk_image = 'vta_detect'
+
+
+class i40eLinuxTvmClassifyNode(i40eLinuxTvmNode):
+
+    def __init__(self):
+        super().__init__()
+        self.disk_image = 'vta_classification'
+
+    def prepare_pre_cp(self):
+        cmds = super().prepare_pre_cp()
+        cmds.extend([
+            "export MXNET_HOME=/root/mxnet",
+        ])
+        return cmds
+
+
+class i40eLinuxVtaNode(i40eLinuxTvmNode):
+
+    def __init__(self):
+        super().__init__()
+        self.memory = 3 * 1024
+        self.kcmd_append = ' memmap=512M!1G'
+
+    def prepare_pre_cp(self):
+        cmds = super().prepare_pre_cp()
+        cmds.extend([
+            'echo 1 >/sys/module/vfio/parameters/enable_unsafe_noiommu_mode',
+            'echo "dead beef" >/sys/bus/pci/drivers/vfio-pci/new_id',
+        ])
+        return cmds
+
+
+class TvmTracker(AppConfig):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.tracker_host = '0.0.0.0'
+        self.tracker_port = 9190
 
     def run_cmds(self, node):
-        return ['python /tmp/guest/deploy_classification.py']
+        return [
+            f'python3 -m tvm.exec.rpc_tracker --host={self.tracker_host} --port={self.tracker_port} &',
+            'sleep infinity'
+        ]
+
+
+class VtaRpcServerWTracker(AppConfig):
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.pci_device_id = '0000:00:00.0'
+        self.tracker_host = '10.0.0.1'
+        self.tracker_port = 9190
+
+    def run_cmds(self, node):
+        cmds = [
+            # wait for tracker to start
+            'sleep 3',
+            f'VTA_DEVICE={self.pci_device_id} '
+            f'python3 -m vta.exec.rpc_server --key=simbricks-pci --tracker={self.tracker_host}:{self.tracker_port} &',
+            'sleep infinity'
+        ]
+        return cmds
+
+class TvmDeviceType(enum.Enum):
+    VTA = 'vta'
+    CPU = 'cpu'
+    CPU_AVX512 = 'cpu_avx512'
+

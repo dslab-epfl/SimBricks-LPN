@@ -31,9 +31,13 @@ NOPAXOS_IMAGE := $(d)output-nopaxos/nopaxos
 MTCP_IMAGE := $(d)output-mtcp/mtcp
 TAS_IMAGE := $(d)output-tas/tas
 VTA_IMAGE := $(d)output-vta/vta
+VTA_DETECT_IMAGE := $(d)output-vta_detect/vta_detect
+VTA_CLASSIFICATION_IMAGE := $(d)output-vta_classification/vta_classification
+VTA_CLASSIFICATION_SIMICS_IMAGE := $(d)output-vta_classification-simics/vta_classification-simics
+NPB_IMAGE := $(d)output-npb/npb
 COMPRESSED_IMAGES ?= false
 
-IMAGES := $(BASE_IMAGE) $(NOPAXOS_IMAGE) $(MEMCACHED_IMAGE) $(VTA_IMAGE)
+IMAGES := $(BASE_IMAGE) $(VTA_IMAGE) $(VTA_DETECT_IMAGE) $(VTA_CLASSIFICATION_IMAGE)
 RAW_IMAGES := $(addsuffix .raw,$(IMAGES))
 
 IMAGES_MIN := $(BASE_IMAGE)
@@ -130,6 +134,38 @@ $(VTA_IMAGE): $(packer) $(QEMU) $(BASE_IMAGE) \
 	    $(COMPRESSED_IMAGES)
 	touch $@
 
+$(NPB_IMAGE): $(packer) $(QEMU) $(BASE_IMAGE) \
+    $(addprefix $(d), extended-image.pkr.hcl scripts/install-npb.sh \
+      scripts/cleanup.sh)
+	rm -rf $(dir $@)
+	cd $(img_dir) && ./packer-wrap.sh base npb extended-image.pkr.hcl \
+	    $(COMPRESSED_IMAGES)
+	touch $@
+
+$(VTA_DETECT_IMAGE): $(packer) $(QEMU) $(VTA_IMAGE) \
+    $(addprefix $(d), extended-image.pkr.hcl scripts/install-vta_detect.sh \
+      scripts/cleanup.sh)
+	rm -rf $(dir $@)
+	cd $(img_dir) && ./packer-wrap.sh vta vta_detect extended-image.pkr.hcl \
+	    $(COMPRESSED_IMAGES)
+	touch $@
+
+$(VTA_CLASSIFICATION_IMAGE): $(packer) $(QEMU) $(VTA_IMAGE) \
+    $(addprefix $(d), extended-image.pkr.hcl scripts/install-vta_classification.sh \
+      scripts/cleanup.sh)
+	rm -rf $(dir $@)
+	cd $(img_dir) && ./packer-wrap.sh vta vta_classification extended-image.pkr.hcl \
+	    $(COMPRESSED_IMAGES)
+	touch $@
+
+$(VTA_CLASSIFICATION_SIMICS_IMAGE): $(packer) $(QEMU) $(VTA_CLASSIFICATION_IMAGE) \
+    $(addprefix $(d), extended-image.pkr.hcl scripts/install-vta_classification-simics.sh \
+      scripts/cleanup.sh)
+	rm -rf $(dir $@)
+	cd $(img_dir) && ./packer-wrap.sh vta_classification vta_classification-simics \
+	    extended-image.pkr.hcl $(COMPRESSED_IMAGES)
+	rm -rf $(img_dir)/input-base
+	touch $@
 
 $(packer):
 	wget -O $(img_dir)packer_$(PACKER_VERSION)_linux_amd64.zip \
