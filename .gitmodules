@@ -26,3 +26,4 @@
 [submodule "sims/external/vta"]
 	path = sims/external/vta
 	url = https://github.com/jonas-kaufmann/tvm-vta-simbricks.git
+	branch = lpn
