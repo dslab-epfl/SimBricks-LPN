@@ -2,3 +2,6 @@
 	path = local/tvm
 	url = https://github.com/jonas-kaufmann/tvm-simbricks.git
 	branch = lpn
+[submodule "local/npb"]
+	path = local/npb
+	url = https://github.com/MJChku/NPB3.0-omp-C
