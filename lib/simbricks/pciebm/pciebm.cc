@@ -38,15 +38,19 @@
 #include <ctime>
 #include <iostream>
 #include <memory>
+#include <thread>
 
 #include "simbricks/base/if.h"
 #include "simbricks/pcie/if.h"
 
 extern "C" {
+#include <simbricks/mem/if.h>
 #include <simbricks/base/proto.h>
 }
 
 #define DEBUG_PCIEBM 0
+
+#define ENABLE_MEM_SIDE_CHANNEL
 
 namespace pciebm {
 
@@ -358,6 +362,17 @@ void PcieBM::H2DDevctrl(volatile struct SimbricksProtoPcieH2DDevctrl *devctrl) {
   DevctrlUpdate(*(struct SimbricksProtoPcieH2DDevctrl *)devctrl);
 }
 
+void PcieBM::H2DFastforward(volatile struct SimbricksProtoPcieH2DForceupadte &msg) {
+  uint64_t force_update_time = msg.payload;
+  main_time_ = force_update_time;
+  FastForward();
+  // send the sync to the peer, that my time is updated
+#if DEBUG_PCIEBM
+  printf("force_update_time: %lu\n", main_time_);
+#endif
+  while(SimbricksPcieIfD2HOutSync(&pcieif_, main_time_)<0);
+}
+
 bool PcieBM::PollH2D() {
   volatile union SimbricksProtoPcieH2D *msg =
       SimbricksPcieIfH2DInPoll(&pcieif_, main_time_);
@@ -413,6 +428,10 @@ bool PcieBM::PollH2D() {
       fprintf(stderr, "poll_h2d: peer terminated\n");
       break;
 
+    case SIMBRICKS_PROTO_PCIE_H2D_MSG_FORCESYNC_TIME:
+      H2DFastforward(msg->forceupdate);
+      break;
+
     default:
       fprintf(stderr, "poll_h2d: unsupported type=%u\n", type);
   }
@@ -453,6 +472,69 @@ bool PcieBM::EventTrigger() {
 void PcieBM::YieldPoll() {
 }
 
+#ifdef ENABLE_MEM_SIDE_CHANNEL
+bool PcieBM::SimBricksIfsInit() {
+  struct SimbricksBaseIfSHMPool pool[2];
+  struct SimBricksBaseIfEstablishData ests[2];
+  struct SimbricksProtoPcieHostIntro pcie_h_intro;
+  struct SimbricksProtoMemMemIntro mem_m_intro;
+
+  std::memset(&pool, 0, sizeof(pool));
+  std::memset(&ests, 0, sizeof(ests));
+
+  ests[0].base_if = &pcieif_.base;
+  ests[0].tx_intro = &dintro_;
+  ests[0].tx_intro_len = sizeof(dintro_);
+  ests[0].rx_intro = &pcie_h_intro;
+  ests[0].rx_intro_len = sizeof(pcie_h_intro);
+
+  ests[1].base_if = &memif_.base;
+  ests[1].tx_intro = &mintro_;
+  ests[1].tx_intro_len = sizeof(mintro_);
+  ests[1].rx_intro = &mem_m_intro;
+  ests[1].rx_intro_len = sizeof(mem_m_intro);
+
+  if (SimbricksBaseIfInit(&pcieif_.base, &pcieParams_)) {
+    std::cerr << "PcieIfInit: SimbricksBaseIfInit failed\n";
+    return false;
+  }
+
+  if (SimbricksBaseIfInit(&memif_.base, &memParams_)) {
+    std::cerr << "MemIfInit: SimbricksBaseIfInit failed\n";
+    return false;
+  }
+
+  if (SimbricksBaseIfSHMPoolCreate(
+          &pool[0], pcieShmPath_,
+          SimbricksBaseIfSHMSize(&pcieif_.base.params)) != 0) {
+    std::cerr << "PcieIfInit: SimbricksBaseIfSHMPoolCreate failed\n";
+    return false;
+  }
+
+  if (SimbricksBaseIfSHMPoolCreate(
+          &pool[1], memShmPath_, SimbricksBaseIfSHMSize(&memif_.base.params)) !=
+      0) {
+    std::cerr << "MemIfInit: SimbricksBaseIfSHMPoolCreate failed\n";
+    return false;
+  }
+
+  if (SimbricksBaseIfListen(&pcieif_.base, &pool[0]) != 0) {
+    std::cerr << "PcieIfInit: SimbricksBaseIfListen failed\n";
+    return false;
+  }
+
+  if (SimbricksBaseIfListen(&memif_.base, &pool[1]) != 0) {
+    std::cerr << "MemIfInit: SimbricksBaseIfListen failed\n";
+    return false;
+  }
+
+  if (SimBricksBaseIfEstablish(ests, 2)) {
+    std::cerr << "SimBricksBaseIfEstablish failed\n";
+    return false;
+  }
+  return true;
+}
+#else
 bool PcieBM::PcieIfInit() {
   struct SimbricksBaseIfSHMPool pool;
   struct SimBricksBaseIfEstablishData ests;
@@ -489,14 +571,49 @@ bool PcieBM::PcieIfInit() {
   }
   return true;
 }
+#endif
 
+#ifdef ENABLE_MEM_SIDE_CHANNEL
+bool PcieBM::ParseArgs(int argc, char *argv[]) {
+  SimbricksPcieIfDefaultParams(&pcieParams_);
+  SimbricksMemIfDefaultParams(&memParams_);
+
+  if (argc < 5 || argc > 8) {
+    fprintf(stderr,
+            "Usage: PcieBM MemSideChannel-SOCKET MemSideChannel-SHM PCI-SOCKET "
+            "PCI-SHM [START-TICK] [SYNC-PERIOD] [PCI-LATENCY]\n");
+    return false;
+  }
+  if (argc >= 6)
+    main_time_ = strtoull(argv[5], nullptr, 0);
+  if (argc >= 7)
+    pcieParams_.sync_interval = strtoull(argv[6], nullptr, 0) * 1000ULL;
+  if (argc >= 8)
+    pcieParams_.link_latency = strtoull(argv[7], nullptr, 0) * 1000ULL;
+
+  memParams_.sock_path = argv[1];
+  memShmPath_ = argv[2];
+  pcieParams_.sock_path = argv[3];
+  pcieShmPath_ = argv[4];
+
+  printf("MemSideChannel-SOCKET: %s\n", argv[1]);
+  printf("MemSideChannel-SHM: %s\n", argv[2]);
+  printf("PCI-SOCKET: %s\n", argv[3]);
+  printf("PCI-SHM: %s\n", argv[4]);
+  printf("START-TICK: %lu\n", main_time_);
+  printf("SYNC-PERIOD: %lu\n", pcieParams_.sync_interval);
+  printf("PCI-LATENCY: %lu\n", pcieParams_.link_latency);
+
+  return true;
+}
+#else
 bool PcieBM::ParseArgs(int argc, char *argv[]) {
   SimbricksPcieIfDefaultParams(&pcieParams_);
 
   if (argc < 3 || argc > 6) {
     fprintf(stderr,
             "Usage: PcieBM PCI-SOCKET SHM [START-TICK] [SYNC-PERIOD] "
-            "[PCI-LATENCY]\n");
+            "[PCI-LATENCY] \n");
     return false;
   }
   if (argc >= 4)
@@ -510,6 +627,7 @@ bool PcieBM::ParseArgs(int argc, char *argv[]) {
   shmPath_ = argv[2];
   return true;
 }
+#endif
 
 int PcieBM::RunMain() {
   uint64_t next_ts;
@@ -517,12 +635,17 @@ int PcieBM::RunMain() {
 
   memset(&dintro_, 0, sizeof(dintro_));
   SetupIntro(dintro_);
+  memset(&mintro_, 0, sizeof(mintro_));
 
-  if (!PcieIfInit()) {
+  fprintf(stderr, "Intro finished \n");
+
+  if (!SimBricksIfsInit()) {
     return EXIT_FAILURE;
   }
+  fprintf(stderr, "PcieIfInit finished \n");
+
   bool sync_pci = SimbricksBaseIfSyncEnabled(&pcieif_.base);
-  fprintf(stderr, "sync_pci=%d\n", sync_pci);
+  fprintf(stderr, "PcieBM sync_pci=%d\n", sync_pci);
 
   while (!exiting_) {
     // send sync messages
@@ -602,6 +725,61 @@ int PcieBM::RunMain() {
           static_cast<long double>(s_h2d_poll_sync_ + s_n2d_poll_sync_) /
               (s_h2d_poll_suc_ + s_n2d_poll_suc_));
   return 0;
+}
+
+std::unique_ptr<DMAOp> PcieBM::ZeroCostBlockingDma(std::unique_ptr<DMAOp> dma_op){
+  // std::cerr << "ZeroCostBlockingDma() " << (dma_op->write ? "write" : "read") << " addr " << dma_op->dma_addr << std::endl;
+  // Send read request
+  volatile union SimbricksProtoMemH2M* msg =
+      SimbricksMemIfH2MOutAlloc(&memif_, 0);
+  if(!dma_op->write){
+    volatile SimbricksProtoMemH2MRead& read_msg = msg->read;
+    if (!msg) {
+      std::cout << __func__ << " SimbricksMemIfH2MOutAlloc() failed" << std::endl;
+      throw;
+    }
+    read_msg.addr = dma_op->dma_addr;
+    read_msg.len =  dma_op->len;
+    SimbricksMemIfH2MOutSend(&memif_, msg, SIMBRICKS_PROTO_MEM_H2M_MSG_READ);
+
+    // Poll for incoming message
+    volatile union SimbricksProtoMemM2H* in_msg;
+    while (true) {
+      in_msg =
+          SimbricksMemIfM2HInPoll(&memif_, std::numeric_limits<uint64_t>::max());
+      if (in_msg) {
+        break;
+      }
+      std::this_thread::yield();
+    }
+
+    uint8_t msg_type = SimbricksMemIfM2HInType(&memif_, in_msg);
+    if (msg_type != SIMBRICKS_PROTO_MEM_M2H_MSG_READCOMP) {
+      std::cerr << __func__ << " unexpected msg type " << msg_type << ""
+                << std::endl;
+      throw;
+    }
+    // std::cerr << "ZeroCostBlockingDma() readcomp addr " << dma_op->dma_addr << std::endl;
+    volatile SimbricksProtoMemM2HReadcomp& read_comp = in_msg->readcomp;
+    std::memcpy(dma_op->data, const_cast<uint8_t*>(read_comp.data), dma_op->len);
+    SimbricksMemIfM2HInDone(&memif_, in_msg);
+    return dma_op;
+  }else{
+    volatile SimbricksProtoMemH2MWrite& write_msg = msg->write;
+
+    if (!msg) {
+      std::cout << __func__ << " SimbricksMemIfH2MOutAlloc() failed" << std::endl;
+      throw;
+    }
+
+    write_msg.addr = dma_op->dma_addr;
+    write_msg.len = dma_op->len;
+    std::memcpy(const_cast<uint8_t*>(write_msg.data), dma_op->data, dma_op->len);
+
+    SimbricksMemIfH2MOutSend(&memif_, msg,
+                            SIMBRICKS_PROTO_MEM_H2M_MSG_WRITE_POSTED);
+    return nullptr;
+  }
 }
 
 }  // namespace pciebm

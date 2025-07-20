@@ -36,6 +36,7 @@
 #include <simbricks/base/cxxatomicfix.h>
 extern "C" {
 #include "simbricks/pcie/if.h"
+#include "simbricks/mem/if.h"
 }
 
 namespace pciebm {
@@ -97,6 +98,8 @@ class PcieBM {
   /* Callback for a device control update request. */
   virtual void DevctrlUpdate(struct SimbricksProtoPcieH2DDevctrl &devctrl) = 0;
 
+  virtual void FastForward() = 0;
+
   /**
    * The following functions form the API exposed to the behavioral model for
    * invoking PCIe requests and scheduling events.
@@ -124,6 +127,8 @@ class PcieBM {
    * executed. If no scheduled event exists, returns an empty std::optional */
   std::optional<uint64_t> EventNext();
 
+  
+
  private:
   uint64_t main_time_ = 0;
   uint32_t dma_read_max_pending_;
@@ -138,9 +143,13 @@ class PcieBM {
   std::unordered_map<uintptr_t, std::unique_ptr<DMAOp>> dma_write_pending_{};
 
   struct SimbricksBaseIfParams pcieParams_;
-  const char *shmPath_ = nullptr;
+  struct SimbricksBaseIfParams memParams_;
+  const char *pcieShmPath_ = nullptr;
+  const char *memShmPath_ = nullptr;
   struct SimbricksPcieIf pcieif_;
+  struct SimbricksMemIf memif_;
   struct SimbricksProtoPcieDevIntro dintro_;
+  struct SimbricksProtoMemHostIntro mintro_;
 
   /* for signal handlers */
   volatile bool exiting_ = false;
@@ -170,6 +179,7 @@ class PcieBM {
   void H2DWritecomp(volatile struct SimbricksProtoPcieH2DWritecomp *writecomp);
   void H2DDevctrl(volatile struct SimbricksProtoPcieH2DDevctrl *devctrl);
   bool PollH2D();
+  void H2DFastforward(volatile struct SimbricksProtoPcieH2DForceupadte &msg);
 
   bool EventTrigger();
 
@@ -177,7 +187,8 @@ class PcieBM {
   void DmaTrigger();
 
   void YieldPoll();
-  bool PcieIfInit();
+  bool SimBricksIfsInit();
+  bool MemIfInit();
 
  public:
   PcieBM(uint32_t dma_max_pending) : dma_read_max_pending_(dma_max_pending), dma_write_max_pending_(dma_max_pending) {}
@@ -187,6 +198,7 @@ class PcieBM {
 
   /** Run the simulation */
   int RunMain();
+  int MemRunMain();
 
   /* This handler should be invoked when receiving a SIGINT signal. */
   void SIGINTHandler();
@@ -194,6 +206,8 @@ class PcieBM {
   void SIGUSR1Handler();
   /* This handler should be invoked when receiving a SIGUSR2 signal. */
   void SIGUSR2Handler();
+
+  std::unique_ptr<DMAOp> ZeroCostBlockingDma(std::unique_ptr<DMAOp> dma_op);
 };
 
 }  // namespace pciebm
