@@ -1,0 +1,6 @@
+obj_dir/
+
+gcd_dump.vcd
+gcd_verilator
+gcd_hw_workload
+gcd_sw_workload
