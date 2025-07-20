@@ -5,3 +5,6 @@
 [submodule "local/npb"]
 	path = local/npb
 	url = https://github.com/MJChku/NPB3.0-omp-C
+[submodule "local/hyperprotobench"]
+	path = local/hyperprotobench
+	url = https://github.com/MJChku/hyperprotobench
