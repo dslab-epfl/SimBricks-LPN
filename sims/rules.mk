@@ -27,6 +27,5 @@ $(eval $(call subdir,mem))
 $(eval $(call subdir,misc))
 $(eval $(call subdir,net))
 $(eval $(call subdir,nic))
-$(eval $(call subdir,lpn))
 
 include mk/subdir_post.mk
