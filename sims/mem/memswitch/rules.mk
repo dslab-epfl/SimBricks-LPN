@@ -28,7 +28,8 @@ OBJS := $(d)memswitch.o
 
 $(OBJS): CPPFLAGS := $(CPPFLAGS) -I$(d)include/
 
-$(bin_memswitch): $(OBJS) $(lib_netif) $(lib_nicif)  $(lib_base) -lpcap
+$(bin_memswitch): LDLIBS += -lpcap
+$(bin_memswitch): $(OBJS) $(lib_netif) $(lib_nicif)  $(lib_base)
 
 CLEAN := $(bin_memswitch) $(OBJS)
 ALL := $(bin_memswitch)

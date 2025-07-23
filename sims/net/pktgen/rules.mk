@@ -28,7 +28,8 @@ OBJS := $(d)pktgen.o
 
 $(OBJS): CPPFLAGS := $(CPPFLAGS) -I$(d)include/
 
-$(bin_pktgen): $(OBJS) $(lib_netif) $(lib_nicif) $(lib_base) -lpcap
+$(bin_pktgen): LDLIBS += -lpcap
+$(bin_pktgen): $(OBJS) $(lib_netif) $(lib_nicif) $(lib_base)
 
 CLEAN := $(bin_pktgen) $(OBJS)
 ALL := $(bin_pktgen)

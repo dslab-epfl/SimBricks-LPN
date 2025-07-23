@@ -28,7 +28,8 @@ OBJS := $(d)net_switch.o
 
 $(OBJS): CPPFLAGS := $(CPPFLAGS) -I$(d)include/
 
-$(bin_net_switch): $(OBJS) $(lib_netif) $(lib_nicif)  $(lib_base) -lpcap
+$(bin_net_switch): LDLIBS += -lpcap
+$(bin_net_switch): $(OBJS) $(lib_netif) $(lib_nicif)  $(lib_base)
 
 CLEAN := $(bin_net_switch) $(OBJS)
 ALL := $(bin_net_switch)
