@@ -87,8 +87,7 @@ bin_workload := $(d)jpeg_decoder_workload
 OBJS := $(bin_workload).o $(d)vfio.o
 
 # statically linked binary that can run under any Linux image
-$(bin_workload): CPPFLAGS += -static
-$(bin_workload): LDFLAGS += -static
+$(bin_workload): LDLIBS += -static-libstdc++ -static-libgcc
 $(bin_workload): $(bin_workload).o $(d)vfio.o
 
 CLEAN := $(bin_jpeg_decoder) $(verilator_obj_dir) $(bin_workload) $(OBJS)

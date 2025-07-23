@@ -86,17 +86,14 @@ $(bin_jpeg_decoder_multiple2): $(verilator_bin_jpeg_decoder_multiple2)
 bin_workload := $(d)jpeg_decoder_workload
 
 # statically linked binary that can run under any Linux image
-$(bin_workload): CPPFLAGS += -static
-$(bin_workload): LDFLAGS += -static
+$(bin_workload): LDLIBS += -static-libstdc++ -static-libgcc
 $(bin_workload): $(bin_workload).o $(d)vfio.o
 
 # jpeg_multithreaded_workload
 bin_multithreaded_workload := $(d)jpeg_multithreaded_workload
 
 # statically linked binary that can run under any Linux image
-$(bin_multithreaded_workload): CPPFLAGS += -static
-$(bin_multithreaded_workload): LDFLAGS += -static
-$(bin_multithreaded_workload): LDLIBS += -lpthread
+$(bin_multithreaded_workload): LDLIBS += -lpthread -static-libstdc++ -static-libgcc
 $(bin_multithreaded_workload): $(bin_multithreaded_workload).o $(d)vfio.o
 
 OBJS := $(bin_multithreaded_workload).o $(bin_workload).o $(d)vfio.o
