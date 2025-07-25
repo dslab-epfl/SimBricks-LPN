@@ -11,6 +11,7 @@ sims/mem/basicmem/basicmem
 sims/mem/memnic/memnic
 sims/mem/memswitch/memswitch
 sims/mem/netmem/netmem
+sims/misc/mem_sidechannel/tester
 sims/nic/corundum/corundum_verilator
 sims/nic/corundum/obj_dir
 sims/nic/e1000_gem5/e1000_gem5
