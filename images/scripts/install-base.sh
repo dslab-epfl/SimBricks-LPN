@@ -20,16 +20,6 @@ apt-get -y install \
     wget \
     build-essential
 
-mkdir -p /root
-pushd /root
-wget https://oc.cs.uni-saarland.de/index.php/s/CSFRMcpKTprZQXj/download/npb.tar.gz
-tar -xvzf npb.tar.gz
-rm npb.tar.gz
-pushd npb
-make suite
-popd
-popd
-
 pushd /tmp/input
 mv guestinit.sh /home/ubuntu/guestinit.sh
 mv bzImage /boot/vmlinuz-5.15.93
