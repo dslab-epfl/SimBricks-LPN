@@ -108,6 +108,14 @@ $(d)vta/ready: $(d)vta $(lib_nicif)
 	cd $</simbricks && $(MAKE)
 	touch $@
 
+$(d)protoacc:
+	git clone \
+	  https://github.com/MJChku/protoacc.git $@
+
+$(d)protoacc/ready: $(d)protoacc $(lib_nicif)
+	cd $</simbricks && $(MAKE)
+	touch $@
+
 DISTCLEAN := $(d)gem5 $(d)qemu $(d)ns-3 $(d)femu
 EXTERNAL_CLEAN_TASKS := gem5-clean qemu-clean ns-3-clean femu-clean
 include mk/subdir_post.mk

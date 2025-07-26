@@ -1220,7 +1220,7 @@ class ProtoaccDev(PCIDevSim):
 
     def run_cmd(self, env):
         cmd = (
-            f'{env.repodir}/sims/misc/protoacc/simbricks/protoacc_simbricks '
+            f'{env.repodir}/sims/external/protoacc/simbricks/protoacc_simbricks '
             f'{env.dev_pci_path(self)} {env.dev_shm_path(self)} '
             f'{self.start_tick} {self.sync_period} {self.pci_latency} '
             f'{self.clock_freq}'

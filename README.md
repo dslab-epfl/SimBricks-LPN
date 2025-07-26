@@ -16,15 +16,22 @@ Follow these steps from the repository root:
    ```bash
    make
    ```
-2. **Build gem5:**
+2. **Build gem5/QEMU/Simulators:**
    ```bash
-   make sims/external/gem5/ready
-   ```
-3. **Build QEMU:**
-   ```bash
+    make sims/external/gem5/ready
+ 
     make sims/external/qemu/ready
+
+    unset VTA_HW_PATH
+
+    make sims/external/vta/ready
+
+    make sims/external/protoacc/ready
    ```
 4. **Build disk images:**
+
+  Change 'home' variable in images/extended-image.pkr.hcl to point to the path of SimBricks-LPN.
+
    ```bash
    make build-images
    ```
@@ -32,6 +39,7 @@ Follow these steps from the repository root:
    ```bash
    make convert-images-raw
    ```
+  
 6. **Run the experiment:**
   
 

@@ -980,6 +980,7 @@ class VTAMatMul(AppConfig):
             f"export TVM_NUM_THREADS=1 ",
             f'export GEM5_CP={int(self.gem5_cp)}',
             f'export VTA_DEVICE={self.pci_device}',
+            'export VTA_VFIO_GROUP_ID=0',
             'export VTA_RPC_HOST=127.0.0.1',
             'export VTA_RPC_PORT=9091',
             # this only starts the RPC server, the driver for VTA is only loaded

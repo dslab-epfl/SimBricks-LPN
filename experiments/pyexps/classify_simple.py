@@ -47,7 +47,7 @@ class TvmClassifyLocal(node.AppConfig):
         return {
             "pci_driver.cc":
                 open(
-                    f"{home}/SimBricks-LPN/local/pci_driver.cc",
+                    f"{home}/SimBricks-LPN/local/tvm/3rdparty/vta-hw/src/simbricks-pci/pci_driver.cc",
                     "rb",
                 ),
             "test.c":
@@ -81,11 +81,12 @@ class TvmClassifyLocal(node.AppConfig):
 
     def run_cmds(self, node):
         # define commands to run on simulated server
+        # this won't work with qemu, clock skew detected
         # cmds = [
         # "cp /tmp/guest/pci_driver.cc /root/tvm/3rdparty/vta-hw/src/simbricks-pci/pci_driver.cc",
         # "cd /root/tvm/build",
         # "make clean",
-        # "make -j4",
+        # "make -j8",
         # ]
         cmds = []
         cmds.extend([
@@ -172,7 +173,7 @@ for (
     vta_ops
 ):
     experiment = exp.Experiment(
-        f"classify_160-{model_name}-{inference_device.value}-{host_var}-{vta_op}-{cores}-{vta_clk_freq}"
+        f"classify-{model_name}-{inference_device.value}-{host_var}-{vta_op}-{cores}-{vta_clk_freq}"
     )
     pci_vta_id = 2
     sync = False
@@ -218,7 +219,7 @@ for (
         HostClass = CustomGem5
         sync = True
         experiment.checkpoint = True
-        pci_vta_id = 0
+        pci_vta_id = 5
 
     # Instantiate server
     server_cfg = VtaNode()

@@ -46,7 +46,7 @@ class TvmClassifyLocal(node.AppConfig):
         return {
             "pci_driver.cc":
                 open(
-                    f"{home}/SimBricks-LPN/local/pci_driver.cc",
+                    f"{home}/SimBricks-LPN/local/tvm/3rdparty/vta-hw/src/simbricks-pci/pci_driver.cc.100MB",
                     "rb",
                 ),
             "test.c":
@@ -82,7 +82,6 @@ class TvmClassifyLocal(node.AppConfig):
         # cmds = [
         # "cp /tmp/guest/pci_driver.cc /root/tvm/3rdparty/vta-hw/src/simbricks-pci/pci_driver.cc",
         # "cd /root/tvm/build",
-        # "make clean",
         # "make -j4",
         # ]
         cmds = []
@@ -90,7 +89,7 @@ class TvmClassifyLocal(node.AppConfig):
             # start RPC server
             f"export TVM_NUM_THREADS=1 ",
             f"python3 -m tvm.exec.rpc_tracker --host=0.0.0.0 --port=9091 &",
-            "sleep 10"
+            "sleep 30"
         ])
         for i in range(self.num_vta_devices):
             cmds.append(
@@ -101,7 +100,7 @@ class TvmClassifyLocal(node.AppConfig):
             )
         cmds.extend([
             # wait for RPC servers to start
-            "sleep 10",
+            "sleep 30",
         ])
         cmds.extend([
             # wait for RPC servers to start
@@ -127,7 +126,7 @@ class VtaNode(node.NodeConfig):
     def __init__(self) -> None:
         super().__init__()
         # Use locally built disk image
-        self.disk_image = "vta_classification"
+        self.disk_image = "vta_classification_multi"
         # Bump amount of system memory
         self.memory = 4 * 1024
         # Reserve physical range of memory for the VTA user-space driver
@@ -179,7 +178,7 @@ for (
     num_vta_opts
 ):
     experiment = exp.Experiment(
-        f"classify_multi_exit-{model_name}-{inference_device.value}-{host_var}-{vta_op}-{num_vta}"
+        f"classify_multi-{model_name}-{inference_device.value}-{host_var}-{vta_op}-{num_vta}"
     )
     
     class CustomGem5(sim.Gem5Host):

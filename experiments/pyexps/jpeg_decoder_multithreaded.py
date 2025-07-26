@@ -81,7 +81,7 @@ class JpegDecoderWorkload(node.AppConfig):
         files = {}
         files["jpeg_multithreaded_workload"] = open("../sims/misc/jpeg_decoder/jpeg_multithreaded_workload", 'rb')
 
-        for img in sorted(glob.glob("../Zurvan/test/data/*.jpg")):
+        for img in sorted(glob.glob("./jpeg_data/*.jpg")):
             files[os.path.basename(img)] = open(img, 'rb')
 
         return files

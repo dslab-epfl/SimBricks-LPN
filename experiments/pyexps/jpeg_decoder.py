@@ -137,11 +137,11 @@ for host_var in ['gem5_kvm', 'gem5_o3', 'qemu_icount', 'qemu_kvm']:
         dma_src = 1 * 1024**3
         dma_dst = dma_src + 10 * 1024**2
         node_cfg.memory = 2 * 1024
-        # images = glob.glob('../sims/misc/jpeg_decoder/test_img/420/medium.jpg')
-        images = glob.glob('../sims/misc/jpeg_decoder/test_img/420/*.jpg')
+        # images = glob.glob('../sims/misc/jpeg_decoder/test_img/420/*.jpg')
+        images = glob.glob('./jpeg_data/*.jpg')
         images.sort()
         node_cfg.app = JpegDecoderWorkload(
-            '0000:00:00.0', images, dma_src, dma_dst, False
+            '0000:00:05.0', images, dma_src, dma_dst, False
         )
 
         if host_var == 'gem5_kvm':
@@ -150,7 +150,7 @@ for host_var in ['gem5_kvm', 'gem5_o3', 'qemu_icount', 'qemu_kvm']:
         elif host_var == 'gem5_o3':
             e.checkpoint = True
             node_cfg.app.gem5_cp = True
-            node_cfg.app.pci_device = '0000:00:00.0'
+            node_cfg.app.pci_device = '0000:00:05.0'
             host = CustomGem5(node_cfg)
             host.sync = True
             host.cpu_type = 'O3CPU'

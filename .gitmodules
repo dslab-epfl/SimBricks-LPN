@@ -20,13 +20,13 @@
 [submodule "sims/external/femu"]
 	path = sims/external/femu
 	url = https://github.com/simbricks/femu.git
-[submodule "sims/misc/jpeg_decoder/rtl"]
-	path = sims/misc/jpeg_decoder/rtl
-	url = https://github.com/jonas-kaufmann/core_jpeg_decoder.git
 [submodule "sims/external/vta"]
 	path = sims/external/vta
 	url = https://github.com/jonas-kaufmann/tvm-vta-simbricks.git
 	branch = lpn
-[submodule "sims/misc/protoacc"]
-	path = sims/misc/protoacc
+[submodule "sims/external/protoacc"]
+	path = sims/external/protoacc
 	url = https://github.com/MJChku/protoacc.git
+[submodule "sims/misc/jpeg_decoder/rtl"]
+	path = sims/misc/jpeg_decoder/rtl
+	url = https://github.com/jonas-kaufmann/core_jpeg_decoder.git

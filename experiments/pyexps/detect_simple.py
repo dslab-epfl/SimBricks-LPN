@@ -42,9 +42,9 @@ for host_var, inference_device, vta_clk_freq, vta_op in itertools.product(
     host_variants, inference_device_opts, vta_clk_freq_opts, vta_ops
 ):
     experiment = exp.Experiment(
-        f"detect_t-{inference_device.value}-{host_var}-{vta_op}-{vta_clk_freq}"
+        f"detect-{inference_device.value}-{host_var}-{vta_op}-{vta_clk_freq}"
     )
-    pci_vta_id = 2
+    pci_vta_id = 5
     sync = False
     if host_var == "qemu_kvm":
         HostClass = sim.QemuHost
@@ -55,7 +55,7 @@ for host_var, inference_device, vta_clk_freq, vta_op in itertools.product(
         HostClass = CustomGem5
         sync = True
         experiment.checkpoint = True
-        pci_vta_id = 0
+        pci_vta_id = 5
 
     #######################################################
     # Define application
@@ -90,7 +90,7 @@ for host_var, inference_device, vta_clk_freq, vta_op in itertools.product(
             cmds = [
                 f"export TVM_NUM_THREADS=1 ",
                 # start RPC server
-                f"VTA_DEVICE={self.pci_device_id} python3 -m"
+                f"VTA_DEVICE={self.pci_device_id} VTA_VFIO_GROUP_ID=0 python3 -m"
                 " vta.exec.rpc_server &"
                 # wait for RPC server to start
                 "sleep 6",

@@ -69,15 +69,9 @@ class VtaNode(node.NodeConfig):
         cmds.extend([
             "mount -t proc proc /proc",
             "mount -t sysfs sysfs /sys",
-            # Make TVM's Python framework available
-            "export PYTHONPATH=/root/tvm/python:${PYTHONPATH}",
-            "export PYTHONPATH=/root/tvm/vta/python:${PYTHONPATH}",
-            "export MXNET_HOME=/root/mxnet",
-            # Set up loopback interface so the TVM inference script can
-            # connect to the RPC server
             "ip link set lo up",
             "ip addr add 127.0.0.1/8 dev lo",
-            # Make VTA device available for control from user-space via
+            # Make Protoacc device available for control from user-space via
             # VFIO
             'echo 1 >/sys/module/vfio/parameters/enable_unsafe_noiommu_mode',
             'echo "dead beef" >/sys/bus/pci/drivers/vfio-pci/new_id',
@@ -100,7 +94,7 @@ class ProtoaccBenchmark(node.AppConfig):
         return {
             "benchmark.x86":
                 open(
-                    f"${home}/local/hyperproto/gem5/{self.which_bench}-ser/benchmark.x86",
+                    f"{home}/SimBricks-LPN/local/hyperprotobench//gem5/{self.which_bench}-ser/benchmark.x86",
                     "rb",
                 )
         }
@@ -130,7 +124,7 @@ class ProtoaccBenchmark(node.AppConfig):
 for acc_mode in rtl_mode: 
     for host_sim in host_sim_choices:
         for this_bench in which_bench:
-            e = exp.Experiment(f"protoacc_benchmark_t99_t-{acc_mode}-{host_sim}-{this_bench}")
+            e = exp.Experiment(f"protoacc_benchmark-{acc_mode}-{host_sim}-{this_bench}")
             # e = exp.Experiment(f"pac_benchmark_busywait-{acc_mode}-{host_sim}-{this_bench}")
 
             e.checkpoint = True
@@ -141,7 +135,7 @@ for acc_mode in rtl_mode:
             # node_config.memory = 3072
             node_config.cores = 1
             
-            node_config.app = ProtoaccBenchmark('0000:00:02.0', this_bench)
+            node_config.app = ProtoaccBenchmark('0000:00:05.0', this_bench)
 
             if host_sim == "gem5_kvm":
                 node_config.app.pci_device = '0000:00:00.0'
