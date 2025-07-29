@@ -60,6 +60,12 @@ build {
 
   provisioner "file" {
     direction = "upload"
+    source = "${path.cwd}/../local/darknet"
+    destination = "/tmp/darknet-tar"
+  }
+
+  provisioner "file" {
+    direction = "upload"
     source =  "${path.cwd}/../local/npb"
     destination = "/tmp/npb"
   }

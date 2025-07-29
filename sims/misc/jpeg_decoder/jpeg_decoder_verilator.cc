@@ -26,6 +26,7 @@
 // #define AXI_W_DEBUG
 // #define AXIL_W_DEBUG
 // #define AXIL_R_DEBUG
+
 #define JPGD_DEBUG 0
 
 #include "include/jpeg_decoder_verilator.hh"

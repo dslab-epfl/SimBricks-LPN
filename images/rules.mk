@@ -33,11 +33,12 @@ TAS_IMAGE := $(d)output-tas/tas
 VTA_IMAGE := $(d)output-vta/vta
 VTA_DETECT_IMAGE := $(d)output-vta_detect/vta_detect
 VTA_CLASSIFICATION_IMAGE := $(d)output-vta_classification/vta_classification
+VTA_CLASSIFICATION_IMAGE_MULTI := $(d)output-vta_classification_multi/vta_classification_multi
 VTA_CLASSIFICATION_SIMICS_IMAGE := $(d)output-vta_classification-simics/vta_classification-simics
 NPB_IMAGE := $(d)output-npb/npb
 COMPRESSED_IMAGES ?= false
 
-IMAGES := $(BASE_IMAGE) $(VTA_IMAGE) $(VTA_DETECT_IMAGE) $(VTA_CLASSIFICATION_IMAGE)
+IMAGES := $(BASE_IMAGE) $(VTA_IMAGE) $(VTA_DETECT_IMAGE) $(VTA_CLASSIFICATION_IMAGE) $(VTA_CLASSIFICATION_IMAGE_MULTI)
 RAW_IMAGES := $(addsuffix .raw,$(IMAGES))
 
 IMAGES_MIN := $(BASE_IMAGE)
@@ -155,6 +156,14 @@ $(VTA_CLASSIFICATION_IMAGE): $(packer) $(QEMU) $(VTA_IMAGE) \
       scripts/cleanup.sh)
 	rm -rf $(dir $@)
 	cd $(img_dir) && ./packer-wrap.sh vta vta_classification extended-image.pkr.hcl \
+	    $(COMPRESSED_IMAGES)
+	touch $@
+
+$(VTA_CLASSIFICATION_IMAGE_MULTI): $(packer) $(QEMU) $(VTA_CLASSIFICATION_IMAGE) \
+    $(addprefix $(d), extended-image.pkr.hcl scripts/install-vta_classification_multi.sh \
+      scripts/cleanup.sh)
+	rm -rf $(dir $@)
+	cd $(img_dir) && ./packer-wrap.sh vta_classification vta_classification_multi extended-image.pkr.hcl \
 	    $(COMPRESSED_IMAGES)
 	touch $@
 

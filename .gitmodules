@@ -27,6 +27,6 @@
 	path = sims/external/vta
 	url = https://github.com/jonas-kaufmann/tvm-vta-simbricks.git
 	branch = lpn
-[submodule "sims/misc/protoacc"]
-	path = sims/misc/protoacc
+[submodule "sims/external/protoacc"]
+	path = sims/external/protoacc
 	url = https://github.com/MJChku/protoacc.git
