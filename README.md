@@ -1,5 +1,8 @@
 # LPN/DSim for SimBricks
+
 This repo contains LPN/Dsim integration for SimBricks.
+
+The repo assumes this project is cloned under $HOME/, if not, some path may not work. 
  
 # Build Procedure
 
@@ -18,20 +21,13 @@ Follow these steps from the repository root:
    ```
 2. **Build gem5/QEMU/Simulators:**
    ```bash
-    make sims/external/gem5/ready
+    # run `apt remove libprotobuf-dev protobuf-compiler libprotoc-dev` if the following command has issue with protobuf 
+
+    CC=gcc-10 CXX=g++-10 make sims/external/gem5/ready
  
-    make sims/external/qemu/ready
-
-    unset VTA_HW_PATH
-
-    make sims/external/vta/ready
-
-    make sims/external/protoacc/ready
+    CC=gcc-10 CXX=g++-10 make sims/external/qemu/ready
    ```
 4. **Build disk images:**
-
-  Change 'home' variable in images/extended-image.pkr.hcl to point to the path of SimBricks-LPN.
-
    ```bash
    make build-images
    ```
@@ -39,56 +35,56 @@ Follow these steps from the repository root:
    ```bash
    make convert-images-raw
    ```
-  
-6. **Run the experiment:**
+   
+6. **Compile RTLs**
+
+   In the following, we will make RTL simulators, 
+
+   ```bash
+   sudo apt install openjdk-17-jdk
+   ```
+
+   In case you have java installed already, use the following one to choose the right version of java
+   ```bash
+   sudo update-alternatives --config java 
+   sudo update-alternatives --config javac
+   ```
+
+   Install sbt
+
+   ```bash
+   sudo apt-get update
+   sudo apt-get install apt-transport-https curl gnupg -yqq
+   echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+   echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
+   curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo -H gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/scalasbt-release.gpg --import
+   sudo chmod 644 /etc/apt/trusted.gpg.d/scalasbt-release.gpg
+   sudo apt-get update
+   sudo apt-get install sbt
+   ```
+   
+   Finally, make the RTL simulators
+   ```bash
+
+    unset VTA_HW_PATH
+
+    # check if sims/external/vta is on lpn branch
+    # need to install sbt
+    CC=gcc-10 CXX=g++-10 make sims/external/vta/ready
+
+    CC=gcc-10 CXX=g++-10 make sims/external/protoacc/ready
+   ```
+
+7. **Run the experiment:**
+The following scripts launch tmux session and run individual experiments there
+```bash
+cd experiments
+./run_jpeg.sh
+./run_vta.sh
+./run_protoacc.sh
+```
   
 
-## Repository Structure
-- `doc/`: Documentation (Sphinx), automatically deployed on
-  [Read The Docs](https://simbricks.readthedocs.io/en/latest/?badge=latest).
-- `lib/simbricks/`: Libraries implementing SimBricks interfaces
-  - `lib/simbricks/base`: Base protocol implementation responsible for
-    connection setup, message transfer, and time synchronization between
-    SimBricks component simulators.
-  - `lib/simbricks/network`: Network protocol implementation carrying Ethernet
-    packets between network components. Layers over the base protocol.
-  - `lib/simbricks/pcie`: PCIe protocol implementation, roughly modelling PCIe
-    at the transaction level, interconnecting hosts with PCIe device simulators.
-    Layers over base protocol.
-  - `lib/simbricks/nicbm`: Helper C++ library for implementing behavioral
-    (high-level) NIC simulation models, offers similar abstractions as device
-    models in other simulators such as gem-5.
-  - `lib/simbricks/nicif`: *(deprecated)* Thin C library for NIC simulators
-    establishing a network and a PCIe connection.
-- `dist/`: Proxies for distributed SimBricks simulations running on multiple
-  physical hosts.
-  - `dist/sockets/`: Proxy transporting SimBricks messages over regular TCP
-    sockets.
-  - `dist/rdma/`: RDMA SimBricks proxy (not compiled by default).
-- `sims/`: Component Simulators integrated into SimBricks.
-  - `sims/external/`: Submodule pointers to repositories for existing external
-    simulators (gem5, QEMU, Simics, ns-3, FEMU).
-  - `sims/nic/`: NIC simulators
-    - `sims/nic/i40e_bm`: Behavioral NIC model for Intel X710 40G NIC.
-    - `sims/nic/corundum`: RTL simulation with Verilator of the
-      [Corundum FPGA NIC](https://corundum.io/).
-    - `sims/nic/corundum_bm`: Simple behavioral Corundum NIC model.
-    - `sims/nic/e1000_gem5`: E1000 NIC model extracted from gem5.
-  - `sims/net/`: Network simulators
-    - `sims/net/net_switch`: Simple behavioral Ethernet switch model.
-    - `sims/net/wire`: Simple Ethernet "wire" connecting two NICs back-to-back.
-    - `sims/net/pktgen`: Packet generator.
-    - `sims/net/tap`: Linux TAP device adapter.
-    - `sims/net/tofino/`: Adapter for Intel Tofino Simulator.
-    - `sims/net/menshen`: RTL simulation with Verilator for the
-      [Menshen RMT Pipeline](https://isolation.quest/).
-  - `sims/lpn`: DSim/LPN simulator for accelerators (JPEG Decoder, Protoacc, VTA)
-- `experiments/`: Python orchestration framework for running simulations.
-  - `experiments/simbricks/orchestration/`: Orchestration framework implementation.
-  - `experiments/run.py`: Main script for running simulation experiments.
-  - `experiments/pyexps/`: Example simulation experiments.
-- `images/`: Infrastructure to build disk images for host simulators.
-  - `images/kernel/`: Slimmed down Linux kernel to reduce simulation time.
-  - `images/mqnic/`: Linux driver for Corundum NIC.
-  - `images/scripts/`: Scripts for installing packages in disk images.
-- `docker/`: Scripts for building SimBricks Docker images.
+## DSim models in SimBricks
+- `lib/simbricks/pciebm`: 
+- `sims/lpn`: DSim/LPN simulator for accelerators (JPEG Decoder, Protoacc, VTA)
