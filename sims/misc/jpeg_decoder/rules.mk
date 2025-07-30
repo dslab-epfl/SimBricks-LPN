@@ -57,8 +57,7 @@ $(bin_jpeg_decoder): $(verilator_bin_jpeg_decoder)
 bin_workload := $(d)jpeg_decoder_workload
 
 # statically linked binary that can run under any Linux image
-# $(bin_workload): CPPFLAGS += -static
-# $(bin_workload): LDFLAGS += -static
+$(bin_workload): LDFLAGS += -static
 $(bin_workload): $(bin_workload).o $(d)vfio.o
 
 # jpeg_multithreaded_workload
