@@ -32,12 +32,12 @@ def extract_data_from_json(filepath):
         # Extract PERF 0 ns new <num> from the raw string - find all and take the last one
         perf0_matches = re.findall(r'PERF 0, ns new (\d+)', json_str)
         if perf0_matches:
-            perf0_number = int(perf0_matches[-1])  # Take the last match
+            perf0_number = int(perf0_matches[1]) 
         
         # Extract PERF 1 <num> from the raw string - find all and take the last one
         perf1_matches = re.findall(r'PERF 1, ns new (\d+)', json_str)
         if perf1_matches:
-            perf1_number = int(perf1_matches[-1])  # Take the last match
+            perf1_number = int(perf1_matches[1])
         
         assert len(perf0_matches) > 0, "No PERF 0 matches found"
 
@@ -100,6 +100,7 @@ def main():
                 if "bench2" in label or "bench5" in label:
                     # gem5 is inaccurate for perf0 portion
                     latency_data = perf1_number
+
                 result = {
                     'filename': json_file.name,
                     'label': label,

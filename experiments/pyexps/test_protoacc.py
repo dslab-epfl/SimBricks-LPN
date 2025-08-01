@@ -149,8 +149,8 @@ class ProtoaccBenchmark(node.AppConfig):
             cmds.append("./benchmark.x86 ")
         else:
             cmds.append("./benchmark.x86 ")
-            cmds.append("./benchmark.x86 ")
-            cmds.append("./benchmark.x86 ")
+            # cmds.append("./benchmark.x86 ")
+            # cmds.append("./benchmark.x86 ")
 
         return cmds
 
