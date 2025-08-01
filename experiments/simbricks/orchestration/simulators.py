@@ -448,8 +448,8 @@ class Gem5Host(HostSim):
     def __init__(self, node_config: NodeConfig) -> None:
         node_config.sim = 'gem5'
         super().__init__(node_config)
-        # self.cpu_type_cp = 'X86KvmCPU'
-        self.cpu_type_cp = "X86AtomicSimpleCPU"
+        self.cpu_type_cp = 'X86KvmCPU'
+        # self.cpu_type_cp = "X86AtomicSimpleCPU"
         self.cpu_type = 'TimingSimpleCPU'
         self.sys_clock = '1GHz'
         self.extra_main_args = []

@@ -51,6 +51,40 @@ class CustomGem5(sim.Gem5Host):
             cmd += ' '
         return cmd
 
+class LinuxVTANode(node.NodeConfig):
+
+    def __init__(self):
+        super().__init__()
+        self.disk_image = 'vta_classification'
+        self.memory = 3 * 1024
+        self.kcmd_append = ' memmap=512M!1G'
+
+    def prepare_pre_cp(self):
+        return [
+            'mount -t proc proc /proc',
+            'mount -t sysfs sysfs /sys',
+            'set -x',
+            (
+                'export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:'
+                '/sbin:/bin'
+            ),
+            'export HOME=/root',
+            'cd /root/tvm/',
+            'ip link set lo up',
+            'ip addr add 127.0.0.1/8 dev lo',
+            'echo "127.0.0.1 localhost" >>/etc/hosts',
+            'export PYTHONPATH=/root/tvm/python:${PYTHONPATH}',
+            'export PYTHONPATH=/root/tvm/vta/python:${PYTHONPATH}',
+            'export MXNET_HOME=/mxnet',
+            'echo 1 >/sys/module/vfio/parameters/enable_unsafe_noiommu_mode',
+            'echo "dead beef" >/sys/bus/pci/drivers/vfio-pci/new_id',
+            'cat /sys/module/vfio/parameters/enable_unsafe_noiommu_mode',
+            'sleep 6',
+        ]
+
+    def prepare_post_cp(self):
+        return []
+
 class VtaNode(node.NodeConfig):
 
     def __init__(self) -> None:
@@ -61,7 +95,9 @@ class VtaNode(node.NodeConfig):
         self.memory = 4 * 1024
         # Reserve physical range of memory for the VTA user-space driver
         # 1G is the start 1G - 1G+512M 
-        self.kcmd_append = "memmap=512M$1G iomem=relaxed"
+        # self.kcmd_append = " tsc=reliable clocksource=tsc no_timer_check nowatchdog memmap=512M$1G "
+        # self.kcmd_append = " tsc=reliable clocksource=tsc memmap=512M$1G "
+        self.kcmd_append = " nowatchdog memmap=512M$1G "
 
     def prepare_pre_cp(self):
         # Define commands to run before application to configure the server
@@ -103,22 +139,19 @@ class ProtoaccBenchmark(node.AppConfig):
         cmds = super().prepare_pre_cp()
         cmds.extend([
             f'export PROTOACC_DEVICE={self.pci_device}',
-            # "cd /tmp/guest && ./benchmark.x86"
             ]
         )
         return cmds
     
     def run_cmds(self, node) -> List[str]:
-        cmds = ["cd /tmp/guest && ./benchmark.x86"]
-        cmds.append("time ./benchmark.x86")
-        # cmds.append("./benchmark.x86")
-        cmds.append("ls")
-        # cmds.append("taskset -c 1 ./benchmark.x86")
-        # cmds.append("taskset -c 1 ./benchmark.x86")
-        # cmds.append("taskset -c 1 ./benchmark.x86")
-        # cmds.append("taskset -c 1 ./benchmark.x86")
-        # cmds.append("taskset -c 1 ./benchmark.x86")
-        # cmds.append("./benchmark.x86")
+        cmds = ["cd /tmp/guest && ./benchmark.x86 "]
+        if self.which_bench == "bench2" or self.which_bench == "bench5":
+            cmds.append("./benchmark.x86 ")
+        else:
+            cmds.append("./benchmark.x86 ")
+            cmds.append("./benchmark.x86 ")
+            cmds.append("./benchmark.x86 ")
+
         return cmds
 
 for acc_mode in rtl_mode: 
@@ -129,8 +162,7 @@ for acc_mode in rtl_mode:
 
             e.checkpoint = True
 
-            node_config = node.LinuxVTANode()
-            # node_config = VtaNode()
+            node_config = LinuxVTANode()
             # node_config.nockp = not e.checkpoint
             # node_config.memory = 3072
             node_config.cores = 1
@@ -147,10 +179,11 @@ for acc_mode in rtl_mode:
                 host.wait = True
             elif host_sim == "gem5_o3":
                 host = CustomGem5(node_config)
-                # host = sim.Gem5Host(node_config)
                 node_config.app.pci_device = '0000:00:05.0'
                 e.checkpoint = True
                 host.cpu_type = 'O3CPU'
+                # host.cpu_type_cp = 'X86KvmCPU'
+                host.cpu_type_cp = "X86AtomicSimpleCPU"
                 host.variant = 'fast'
                 host.cpu_freq = '3GHz'
                 host.name = 'host0'
