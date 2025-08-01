@@ -54,7 +54,7 @@ def filename_to_label(filename):
     # Remove file extension and protoacc_ prefix
     base_name = "Protoacc-Gem5-"
 
-    acc_name = "rtl" if "rtl" in base_name else "dsim"
+    acc_name = "rtl" if "rtl" in filename else "dsim"
     if "bench" in filename:
         # Extract the bench number
         bench_name = filename.split('-')[-2]
