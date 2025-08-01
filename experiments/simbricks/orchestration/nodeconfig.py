@@ -104,7 +104,7 @@ class NodeConfig():
         """
         self.app: tp.Optional[AppConfig] = None
         """Application to run on simulated host."""
-        self.kcmd_append = ''
+        self.kcmd_append = ' '
         """String to be appended to kernel command line."""
 
     def config_str(self) -> str:
@@ -903,7 +903,7 @@ class LinuxVTANode(NodeConfig):
         super().__init__()
         self.disk_image = 'vta_classification'
         self.memory = 3 * 1024
-        self.kcmd_append = ' memmap=512M!1G'
+        self.kcmd_append = ' tsc=reliable clocksource=tsc no_timer_check nowatchdog memmap=512M!1G'
 
     def prepare_pre_cp(self):
         return [

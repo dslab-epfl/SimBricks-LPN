@@ -166,7 +166,7 @@ json load_json(string& file_path) {
 void setup_LPN(uint64_t ts){
     
     clear_message_trace();
-    string file_path = "/tmp/zurvan_protoacc_output.json";
+    string file_path = "./tmp_protoacc_output.json";
     json message = load_json(file_path);
     parse_control_tokens(message, 0); 
     parse_fields_and_units(message);

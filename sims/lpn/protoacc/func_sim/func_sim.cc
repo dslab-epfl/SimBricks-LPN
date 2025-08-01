@@ -37,14 +37,14 @@ void end_message(){
     message_stack.pop();
     std::string message_str = message->dump(4);
     // std::cout << message_str << std::endl;
-    std::string filename = "/tmp/zurvan_protoacc_output.json";
+    std::string filename = "./tmp_protoacc_output.json";
     std::ofstream file(filename, std::ios_base::out);
     if (file.is_open()) {
         // Write the JSON message to the file
         file << message_str << std::endl;  // dump(4) formats the JSON with 4-space indentation
         file.close();  // Close the file
     } else {
-        std::cerr << "Unable to open file: " << filename << std::endl;
+        std::cerr << "FuncSim error, unable to open file: " << filename << std::endl;
     }
     // delete message_stack.top();
 }
