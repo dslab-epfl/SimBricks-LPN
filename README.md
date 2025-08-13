@@ -15,6 +15,15 @@ git submodule update --init --recursive
 
 Follow these steps from the repository root:
 
+0. **If you want to run inside a docker image we prepared for the packages, run the following before you make the project:**
+   ```bash
+   npm install -g @devcontainers/cli
+   devcontainer up --workspace-folder "$(pwd)"
+   devcontainer exec --workspace-folder "$(pwd)" /bin/bash
+   ```
+   Furthermore, you can skip specifying CC/CXX anywhere in the following steps, you can skip installation of any packages (java, sbt, etc) mentioned in the following steps.
+
+
 1. **Compile the whole project:**
    ```bash
    make

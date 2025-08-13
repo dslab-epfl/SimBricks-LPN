@@ -1,12 +1,18 @@
 {
-	"initializeCommand": "docker pull simbricks/simbricks-build",
-	"image": "simbricks/simbricks-build:latest",
-	"runArgs": [
-		"--device=/dev/kvm",
-		"--privileged"
-	],
-	"extensions": [
-		"ms-python.python"
-	],
-	"remoteUser": "simbricks"
+  "image": "mjccjm/nexdsim:sosp25_ae",
+  "runArgs": [
+    "--device=/dev/kvm",
+    "--privileged"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "mkhl.direnv",
+        "ms-python.vscode-pylance"
+      ]
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/ubuntu/SimBricks-LPN,type=bind",
+  "workspaceFolder": "/home/ubuntu/SimBricks-LPN",
+  "postAttachCommand": "bash -c \"sudo chmod 777 /dev/kvm\""
 }
