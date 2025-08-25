@@ -1,7 +1,6 @@
 # LPN/DSim for SimBricks
 
 This repo contains LPN/Dsim integration for SimBricks.
-
 The repo assumes this project is cloned under $HOME/, if not, some path may not work. 
  
 # Build Procedure
@@ -90,6 +89,7 @@ The following scripts launch tmux session and run individual experiments there
 cd experiments
 ./run_jpeg.sh
 ./run_vta.sh
+./run_vta_multi.sh
 ./run_protoacc.sh
 ```
   

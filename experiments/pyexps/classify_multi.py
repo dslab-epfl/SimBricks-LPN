@@ -89,7 +89,7 @@ class TvmClassifyLocal(node.AppConfig):
             # start RPC server
             f"export TVM_NUM_THREADS=1 ",
             f"python3 -m tvm.exec.rpc_tracker --host=0.0.0.0 --port=9091 &",
-            "sleep 30"
+            "sleep 60"
         ])
         for i in range(self.num_vta_devices):
             cmds.append(
@@ -100,7 +100,7 @@ class TvmClassifyLocal(node.AppConfig):
             )
         cmds.extend([
             # wait for RPC servers to start
-            "sleep 30",
+            "sleep 60",
         ])
         cmds.extend([
             # wait for RPC servers to start
