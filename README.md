@@ -35,16 +35,16 @@ Follow these steps from the repository root:
  
     CC=gcc-10 CXX=g++-10 make sims/external/qemu/ready
    ```
-4. **Build disk images:**
+3. **Build disk images:**
    ```bash
    make build-images
    ```
-5. **Convert the built disk image to raw format:**
+4. **Convert the built disk image to raw format:**
    ```bash
    make convert-images-raw
    ```
    
-6. **Compile RTLs**
+5. **Compile RTLs**
 
    In the following, we will make RTL simulators, 
 
@@ -83,7 +83,7 @@ Follow these steps from the repository root:
     CC=gcc-10 CXX=g++-10 make sims/external/protoacc/ready
    ```
 
-7. **Run the experiment:**
+6. **Run the experiment:**
 The following scripts launch tmux session and run individual experiments there
 ```bash
 cd experiments
@@ -92,7 +92,16 @@ cd experiments
 ./run_vta_multi.sh
 ./run_protoacc.sh
 ```
-  
+
+7. **Compile results:**
+```
+cp experiments/out/*-1.json results/
+cd results/scripts
+python3 extract_jpeg.py
+python3 extract_protoacc.py
+python3 extract_vta.py
+```
+Then in `results/scripts/compiled_data`, you will see data for gem5. Please copy those to `<NEX_Directory>results/scripts/gem5_compiled_data` as indicated in NEX. 
 
 ## DSim models in SimBricks
 - `lib/simbricks/pciebm`: 
